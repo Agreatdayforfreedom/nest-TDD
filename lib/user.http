@@ -1,0 +1,21 @@
+POST http://localhost:3000/auth/signup
+Content-Type: application/json
+
+{
+    "username": "soma",
+    "password": "123"
+}
+
+###
+POST http://localhost:3000/auth/login
+Content-Type: application/json
+
+{
+    "username": "soma",
+    "password": "123"
+}
+
+###
+GET http://localhost:3000/auth/profile
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2MzhhMDIyZTNjMTYxYjFmNDY2NjU0NmYiLCJ1c2VybmFtZSI6InNvbWEiLCJpYXQiOjE2Njk5OTE0MzIsImV4cCI6MTY2OTk5MTQ5Mn0.FEYKcmwZNB9BfNQRA6dExxL_fhVMOj0m8SoLr0ImLqk
