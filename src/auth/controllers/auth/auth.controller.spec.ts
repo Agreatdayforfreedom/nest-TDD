@@ -5,54 +5,49 @@ import { Connection, connect, Model, mongo } from 'mongoose';
 import { User, UserSchema } from '../../../user/schema/User.schema';
 import { getModelToken } from '@nestjs/mongoose';
 import { AuthService } from '../../services/auth/auth.service';
-import { FakeUserSub, UserStub } from '../../../../test/stubs/user.stub';
+import { FakeUserSub, UserStub } from '../../../common/stubs/user.stub';
 import { UserService } from '../../../user/services/user/user.service';
 import { JwtModule, JwtService } from '@nestjs/jwt';
 import { UnauthorizedException } from '@nestjs/common';
 import * as request from 'supertest';
 import { INestApplication } from '@nestjs/common';
+import {
+  CreateMemoryDatabase,
+  CreateTestingModule,
+} from '../../../common/jest';
 
 describe('AuthController', () => {
   let app: INestApplication;
   let controller: AuthController;
-  let mongod: MongoMemoryServer;
-  let mongoConnection: Connection;
   let authModel: Model<User>;
+  let createMemoryDatabase: CreateMemoryDatabase;
+  let createTestingModule: CreateTestingModule;
 
   beforeAll(async () => {
-    mongod = await MongoMemoryServer.create();
-    const uri = mongod.getUri();
-    mongoConnection = (await connect(uri)).connection;
-    authModel = mongoConnection.model(User.name, UserSchema);
-    const module: TestingModule = await Test.createTestingModule({
-      imports: [JwtModule.register({ secret: 'secret' })],
+    createMemoryDatabase = new CreateMemoryDatabase();
+    createTestingModule = new CreateTestingModule();
+    authModel = await createMemoryDatabase.setup<User>(User.name, UserSchema);
+
+    const module = await createTestingModule.setup({
       controllers: [AuthController],
       providers: [
         AuthService,
         UserService,
-        // JwtService,
         { provide: getModelToken(User.name), useValue: authModel },
       ],
-    }).compile();
+    });
 
     controller = module.get<AuthController>(AuthController);
-    app = module.createNestApplication();
-    await app.init();
+
+    app = await createTestingModule.initApp();
   });
 
   afterAll(async () => {
-    await mongoConnection.dropDatabase();
-    await mongoConnection.close();
-    await mongod.stop();
+    await createMemoryDatabase.stopDatabase();
   });
 
   afterEach(async () => {
-    const collections = mongoConnection.collections;
-
-    for (const key in collections) {
-      const collection = collections[key];
-      await collection.deleteMany({});
-    }
+    await createMemoryDatabase.deleteCollections();
   });
 
   describe('signup', () => {
